@@ -1,0 +1,24 @@
+﻿<Window x:Class="ClipBase.MainWindow" x:Name="Window"
+	xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+	xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+	Title="MainWindow" Height="400" Width="700" Loaded="Window_Loaded" Closed="Window_Closed">
+	<Window.Resources>
+		<ControlTemplate x:Key="IconBtn" TargetType="{x:Type Button}">
+			<Button Background="Transparent" Margin="5" Padding="5" BorderThickness="0" HorizontalAlignment="Left" VerticalAlignment="Center">
+				<StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+					<Image Height="18" Source="{Binding Path=Tag, RelativeSource={RelativeSource TemplatedParent}}" />
+				</StackPanel>
+			</Button>
+		</ControlTemplate>
+	</Window.Resources>
+	<Grid>
+		<Grid.RowDefinitions>
+			<RowDefinition Height="Auto"/>
+			<RowDefinition Height="*"/>
+		</Grid.RowDefinitions>
+		<ToolBarPanel Grid.Row="0" Orientation="Horizontal" Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}">
+			<Button Tag="c:\Download\P.ico" Template="{StaticResource ResourceKey=IconBtn}" />
+		</ToolBarPanel>
+		<ListBox Grid.Row="1" x:Name="pnlContent" KeyDown="PnlContentKeyDown"/>
+	</Grid>
+</Window>
