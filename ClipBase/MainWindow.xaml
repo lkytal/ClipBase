@@ -17,8 +17,23 @@
 			<RowDefinition Height="*"/>
 		</Grid.RowDefinitions>
 		<ToolBarPanel Grid.Row="0" Orientation="Horizontal" Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}">
-			<Button Tag="c:\Download\P.ico" Template="{StaticResource ResourceKey=IconBtn}" />
+			<Button Tag="c:\Download\icon.png" Template="{StaticResource ResourceKey=IconBtn}" />
 		</ToolBarPanel>
-		<ListBox Grid.Row="1" x:Name="pnlContent" KeyDown="PnlContentKeyDown"/>
+		<ListBox Grid.Row="1" x:Name="pnlContent" KeyDown="PnlContentKeyDown" Padding="5" HorizontalContentAlignment="Stretch">
+			<ListBox.ItemContainerStyle>
+				<Style TargetType="ListBoxItem">
+					<Setter Property="Margin" Value="0, 0, 0, 5"/>
+					<Setter Property="Padding" Value="0"/>
+				</Style>
+			</ListBox.ItemContainerStyle>
+			<ListBox.ItemTemplate>
+				<DataTemplate>
+					<StackPanel Orientation="Horizontal" Margin="0" Background="#FFF7F7F7" MouseDown="StackPanel_MouseDown">
+						<Label Height="40" FontFamily="Microsoft Yahei UI" FontSize="14"
+							  VerticalAlignment="Center" ToolTip="{Binding}" Content="{Binding}"></Label>
+					</StackPanel>
+				</DataTemplate>
+			</ListBox.ItemTemplate>
+		</ListBox>
 	</Grid>
 </Window>

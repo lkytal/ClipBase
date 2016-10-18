@@ -65,6 +65,12 @@ namespace ClipBase
 			{
 				string text = Clipboard.GetText();
 
+				int pos = Data.IndexOf(text);
+				if (pos != -1)
+				{
+					Data.RemoveAt(pos);
+				}
+
 				Data.Insert(0, text);
 				Index = 0;
 
@@ -150,6 +156,21 @@ namespace ClipBase
 		private void PnlContentKeyDown(object sender, KeyEventArgs e)
 		{
 			if (e.Key == Key.Return)
+			{
+				Clipboard.SetText(pnlContent.SelectedItem.ToString());
+				Hide();
+			}
+		}
+
+		private void Label_MouseDoubleClick(object sender, MouseButtonEventArgs e)
+		{
+			Clipboard.SetText(pnlContent.SelectedItem.ToString());
+			Hide();
+		}
+
+		private void StackPanel_MouseDown(object sender, MouseButtonEventArgs e)
+		{
+			if (e.ClickCount == 2)
 			{
 				Clipboard.SetText(pnlContent.SelectedItem.ToString());
 				Hide();
