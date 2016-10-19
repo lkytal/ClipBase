@@ -1,17 +1,5 @@
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows;
-using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
-using System.Windows.Input;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Navigation;
-using System.Windows.Shapes;
 using System.Windows.Interop;
 using System.Windows.Forms;
 using System.Collections;
@@ -28,19 +16,19 @@ namespace ClipBase
 	{
 		#region Member
 
-		int KeyId;         //热键编号
-		IntPtr Handle;     //窗体句柄
-		Window Window;     //热键所在窗体
-		uint ControlKey;   //热键控制键
-		uint Key;          //热键主键
+		private int KeyId;         //热键编号
+		private IntPtr Handle;     //窗体句柄
+		private Window Window;     //热键所在窗体
+		private uint ControlKey;   //热键控制键
+		private uint Key;          //热键主键
 
-		public delegate void OnHotKeyEventHandler();     //热键事件委托
-		public event OnHotKeyEventHandler OnHotKey = null;  //热键事件
+		public delegate void OnHotKeyEventHandler();
+		public event OnHotKeyEventHandler OnHotKey = null;
 
-		static Hashtable KeyPair = new Hashtable();         //热键哈希表
-		private const int WM_HOTKEY = 0x0312;       // 热键消息编号
+		private static Hashtable KeyPair = new Hashtable();         //热键哈希表
+		private const int WM_HOTKEY = 0x0312; 
 
-		public enum KeyFlags    //控制键编码
+		public enum KeyFlags
 		{
 			MOD_NONE = 0x0,
 			MOD_ALT = 0x1,
@@ -57,7 +45,7 @@ namespace ClipBase
 		///<param name="win">注册窗体</param>
 		///<param name="control">控制键</param>
 		///<param name="key">主键</param>
-		public HotKey(Window win, HotKey.KeyFlags control, Keys key)
+		public HotKey(Window win, KeyFlags control, Keys key)
 		{
 			Handle = new WindowInteropHelper(win).Handle;
 			Window = win;
@@ -65,19 +53,18 @@ namespace ClipBase
 			Key = (uint)key;
 			KeyId = (int)ControlKey + (int)Key * 10;
 
-			if (HotKey.KeyPair.ContainsKey(KeyId))
+			if (KeyPair.ContainsKey(KeyId))
 			{
 				throw new Exception("热键已经被注册!");
 			}
 
-			//注册热键
-			if (false == HotKey.RegisterHotKey(Handle, KeyId, ControlKey, Key))
+			if (false == RegisterHotKey(Handle, KeyId, ControlKey, Key))
 			{
 				throw new Exception("热键注册失败!");
 			}
 
 			//消息挂钩只能连接一次!!
-			if (HotKey.KeyPair.Count == 0)
+			if (KeyPair.Count == 0)
 			{
 				if (false == InstallHotKeyHook(this))
 				{
@@ -85,11 +72,9 @@ namespace ClipBase
 				}
 			}
 
-			//添加这个热键索引
-			HotKey.KeyPair.Add(KeyId, this);
+			KeyPair.Add(KeyId, this);
 		}
 
-		//析构函数,解除热键
 		//~HotKey()
 		//{
 		//    HotKey.UnregisterHotKey(Handle, KeyId);
@@ -101,10 +86,9 @@ namespace ClipBase
 		private static extern bool RegisterHotKey(IntPtr hWnd, int id, uint controlKey, uint virtualKey);
 
 		[System.Runtime.InteropServices.DllImport("user32")]
-		private static extern bool UnregisterHotKey(IntPtr hWnd, int id);
+		public static extern bool UnregisterHotKey(IntPtr hWnd, int id);
 
-		//安装热键处理挂钩
-		static private bool InstallHotKeyHook(HotKey hk)
+		private static bool InstallHotKeyHook(HotKey hk)
 		{
 			if (hk.Window == null || hk.Handle == IntPtr.Zero)
 			{
@@ -112,23 +96,21 @@ namespace ClipBase
 			}
 
 			//获得消息源
-			System.Windows.Interop.HwndSource source = System.Windows.Interop.HwndSource.FromHwnd(hk.Handle);
+			HwndSource source = HwndSource.FromHwnd(hk.Handle);
 			if (source == null)
 			{
 				return false;
 			}
 
-			//挂接事件
-			source.AddHook(HotKey.HotKeyHook);
+			source.AddHook(HotKeyHook);
 			return true;
 		}
 
-		//热键处理过程
-		static private IntPtr HotKeyHook(IntPtr hwnd, int msg, IntPtr wParam, IntPtr lParam, ref bool handled)
+		private static IntPtr HotKeyHook(IntPtr hwnd, int msg, IntPtr wParam, IntPtr lParam, ref bool handled)
 		{
 			if (msg == WM_HOTKEY)
 			{
-				HotKey hk = (HotKey)HotKey.KeyPair[(int)wParam];
+				HotKey hk = (HotKey)KeyPair[(int)wParam];
 				if (hk.OnHotKey != null)
 				{
 					hk.OnHotKey();

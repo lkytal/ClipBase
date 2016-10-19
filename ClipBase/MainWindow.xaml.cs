@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.ObjectModel;
+using System.Runtime.InteropServices;
 using System.Windows;
 using System.Windows.Forms;
 using System.Windows.Input;
@@ -11,7 +12,7 @@ using KeyEventArgs = System.Windows.Input.KeyEventArgs;
 namespace ClipBase
 {
 	/// <summary>
-	/// MainWindow.xaml 的交互逻辑
+	/// MainWindow.xaml
 	/// </summary>
 	public partial class MainWindow : Window
 	{
@@ -114,9 +115,17 @@ namespace ClipBase
 			CloseCBViewer();
 		}
 
+		[DllImport("user32.dll")]
+		public static extern int SetWindowLong(IntPtr hWnd, int nIndex, IntPtr dwNewLong);
+
 		private void Window_Loaded(object sender, RoutedEventArgs e)
 		{
-			//Hide();
+			WindowInteropHelper wndHelper = new WindowInteropHelper(this);
+			IntPtr HWND = wndHelper.Handle;
+			int GWL_EXSTYLE = -20;
+			SetWindowLong(HWND, GWL_EXSTYLE, (IntPtr)(0x8000000));
+
+			Hide();
 
 			InitCBViewer();
 		}
@@ -127,7 +136,7 @@ namespace ClipBase
 
 			HotKey hotKeyWindow = new HotKey(this, HotKey.KeyFlags.MOD_CONTROL, Keys.T);
 			hotKeyWindow.OnHotKey += OnHotKeyShowWindow;
-			HotKey hotKeyPaste = new HotKey(this, HotKey.KeyFlags.MOD_CONTROL, Keys.Tab);
+			HotKey hotKeyPaste = new HotKey(this, HotKey.KeyFlags.MOD_CONTROL, Keys.W);
 			hotKeyPaste.OnHotKey += OnHotKeyPaste;
 		}
 
@@ -160,12 +169,6 @@ namespace ClipBase
 				Clipboard.SetText(pnlContent.SelectedItem.ToString());
 				Hide();
 			}
-		}
-
-		private void Label_MouseDoubleClick(object sender, MouseButtonEventArgs e)
-		{
-			Clipboard.SetText(pnlContent.SelectedItem.ToString());
-			Hide();
 		}
 
 		private void StackPanel_MouseDown(object sender, MouseButtonEventArgs e)

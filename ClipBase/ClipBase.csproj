@@ -37,7 +37,7 @@
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="InputSimulator">
-      <HintPath>..\..\InputSimulator\bin\Release\InputSimulator.dll</HintPath>
+      <HintPath>.\InputSimulator.dll</HintPath>
       <EmbedAssembly>true</EmbedAssembly>
       <Private>False</Private>
     </Reference>
