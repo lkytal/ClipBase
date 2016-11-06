@@ -1,13 +1,17 @@
 ﻿using System;
 using System.Collections.ObjectModel;
+using System.Drawing;
+using System.IO;
 using System.Runtime.InteropServices;
 using System.Windows;
 using System.Windows.Forms;
 using System.Windows.Input;
 using System.Windows.Interop;
 using WindowsInput;
+using Application = System.Windows.Application;
 using Clipboard = System.Windows.Clipboard;
 using KeyEventArgs = System.Windows.Input.KeyEventArgs;
+using Point = System.Drawing.Point;
 
 namespace ClipBase
 {
@@ -25,14 +29,69 @@ namespace ClipBase
 		public ObservableCollection<string> Data = new ObservableCollection<string>();
 
 		private bool IsViewing;
+		private NotifyIcon quickIcon;
 
 		public MainWindow()
 		{
 			InitializeComponent();
 
+			// ReSharper disable once PossibleNullReferenceException
+			Stream iconstream = Application.GetResourceStream(new Uri("pack://application:,,,/ClipBase;component/Tray.ico")).Stream;
+
+			MenuItem mnuExit = new MenuItem("Exit", ExitMenuEventHandler);
+
+			MenuItem[] menuitems = { mnuExit };
+
+			ContextMenu contextmenu = new ContextMenu(menuitems);
+
+			quickIcon = new NotifyIcon
+			{
+				Icon = new Icon(iconstream, SystemInformation.SmallIconSize),
+				Text = @"ClipBase",
+				Visible = true,
+				ContextMenu = contextmenu
+			};
+
+			iconstream.Close();
+
+			quickIcon.MouseClick += quickIcon_MouseClick;
+
 			pnlContent.BorderThickness = new Thickness(0, 0, 0, 0);
 
 			pnlContent.ItemsSource = Data;
+		}
+
+		private void ExitMenuEventHandler(object sender, EventArgs e)
+		{
+			this.Close();
+		}
+
+		private void quickIcon_MouseClick(object sender, System.Windows.Forms.MouseEventArgs e)
+		{
+			if (e.Button == MouseButtons.Left)
+			{
+				if (this.Visibility == Visibility.Hidden)
+				{
+					this.Visibility = Visibility.Visible;
+					this.Activate();
+				}
+				else
+				{
+					this.Visibility = Visibility.Hidden;
+				}
+			}
+		}
+
+		private void Window_Deactivated(object sender, EventArgs e)
+		{
+			this.Hide();
+		}
+
+		private void Window_Closed(object sender, EventArgs e)
+		{
+			CloseCBViewer();
+
+			quickIcon.Dispose();
 		}
 
 		private void InitCBViewer()
@@ -110,22 +169,22 @@ namespace ClipBase
 			return IntPtr.Zero;
 		}
 
-		private void Window_Closed(object sender, EventArgs e)
-		{
-			CloseCBViewer();
-		}
-
 		[DllImport("user32.dll")]
 		public static extern int SetWindowLong(IntPtr hWnd, int nIndex, IntPtr dwNewLong);
 
 		private void Window_Loaded(object sender, RoutedEventArgs e)
 		{
-			WindowInteropHelper wndHelper = new WindowInteropHelper(this);
-			IntPtr HWND = wndHelper.Handle;
-			int GWL_EXSTYLE = -20;
-			SetWindowLong(HWND, GWL_EXSTYLE, (IntPtr)(0x8000000));
+			//WindowInteropHelper wndHelper = new WindowInteropHelper(this);
+			//IntPtr HWND = wndHelper.Handle;
+			//int GWL_EXSTYLE = -20;
+			//SetWindowLong(HWND, GWL_EXSTYLE, (IntPtr)0x8000000);
 
-			Hide();
+			Point screenposition = Win32.GetWindowPosition(quickIcon, this.Width, this.Height, 96);
+
+			this.Left = screenposition.X;
+			this.Top = screenposition.Y;
+
+			//Hide();
 
 			InitCBViewer();
 		}
