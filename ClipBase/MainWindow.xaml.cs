@@ -1,9 +1,10 @@
 ﻿using System;
 using System.Collections.ObjectModel;
 using System.Drawing;
+using System.Globalization;
 using System.IO;
-using System.Runtime.InteropServices;
 using System.Windows;
+using System.Windows.Data;
 using System.Windows.Forms;
 using System.Windows.Input;
 using System.Windows.Interop;
@@ -29,32 +30,11 @@ namespace ClipBase
 		public ObservableCollection<string> Data = new ObservableCollection<string>();
 
 		private bool IsViewing;
-		private NotifyIcon quickIcon;
+		private NotifyIcon TaskBarIcon;
 
 		public MainWindow()
 		{
 			InitializeComponent();
-
-			// ReSharper disable once PossibleNullReferenceException
-			Stream iconstream = Application.GetResourceStream(new Uri("pack://application:,,,/ClipBase;component/Tray.ico")).Stream;
-
-			MenuItem mnuExit = new MenuItem("Exit", ExitMenuEventHandler);
-
-			MenuItem[] menuitems = { mnuExit };
-
-			ContextMenu contextmenu = new ContextMenu(menuitems);
-
-			quickIcon = new NotifyIcon
-			{
-				Icon = new Icon(iconstream, SystemInformation.SmallIconSize),
-				Text = @"ClipBase",
-				Visible = true,
-				ContextMenu = contextmenu
-			};
-
-			iconstream.Close();
-
-			quickIcon.MouseClick += quickIcon_MouseClick;
 
 			pnlContent.BorderThickness = new Thickness(0, 0, 0, 0);
 
@@ -91,7 +71,7 @@ namespace ClipBase
 		{
 			CloseCBViewer();
 
-			quickIcon.Dispose();
+			TaskBarIcon.Dispose();
 		}
 
 		private void InitCBViewer()
@@ -169,22 +149,35 @@ namespace ClipBase
 			return IntPtr.Zero;
 		}
 
-		[DllImport("user32.dll")]
-		public static extern int SetWindowLong(IntPtr hWnd, int nIndex, IntPtr dwNewLong);
-
 		private void Window_Loaded(object sender, RoutedEventArgs e)
 		{
-			//WindowInteropHelper wndHelper = new WindowInteropHelper(this);
-			//IntPtr HWND = wndHelper.Handle;
-			//int GWL_EXSTYLE = -20;
-			//SetWindowLong(HWND, GWL_EXSTYLE, (IntPtr)0x8000000);
+			// ReSharper disable once PossibleNullReferenceException
+			Stream iconstream = Application.GetResourceStream(new Uri("pack://application:,,,/ClipBase;component/Tray.ico")).Stream;
 
-			Point screenposition = Win32.GetWindowPosition(quickIcon, this.Width, this.Height, 96);
+			MenuItem mnuExit = new MenuItem("Exit", ExitMenuEventHandler);
+
+			MenuItem[] menuitems = { mnuExit };
+
+			ContextMenu contextmenu = new ContextMenu(menuitems);
+
+			TaskBarIcon = new NotifyIcon
+			{
+				Icon = new Icon(iconstream, SystemInformation.SmallIconSize),
+				Text = @"ClipBase",
+				Visible = true,
+				ContextMenu = contextmenu
+			};
+
+			iconstream.Close();
+
+			TaskBarIcon.MouseClick += quickIcon_MouseClick;
+
+			Point screenposition = Win32.GetWindowPosition(TaskBarIcon, this.Width, this.Height, 96);
 
 			this.Left = screenposition.X;
 			this.Top = screenposition.Y;
 
-			//Hide();
+			Hide();
 
 			InitCBViewer();
 		}
@@ -193,8 +186,8 @@ namespace ClipBase
 		{
 			base.OnSourceInitialized(e);
 
-			HotKey hotKeyWindow = new HotKey(this, HotKey.KeyFlags.MOD_CONTROL, Keys.T);
-			hotKeyWindow.OnHotKey += OnHotKeyShowWindow;
+			HotKey hotKeyShow = new HotKey(this, HotKey.KeyFlags.MOD_CONTROL, Keys.T);
+			hotKeyShow.OnHotKey += this.Show;
 			HotKey hotKeyPaste = new HotKey(this, HotKey.KeyFlags.MOD_CONTROL, Keys.W);
 			hotKeyPaste.OnHotKey += OnHotKeyPaste;
 		}
@@ -216,11 +209,6 @@ namespace ClipBase
 			Index += 1;
 		}
 
-		private void OnHotKeyShowWindow()
-		{
-			Show();
-		}
-
 		private void PnlContentKeyDown(object sender, KeyEventArgs e)
 		{
 			if (e.Key == Key.Return)
@@ -230,13 +218,26 @@ namespace ClipBase
 			}
 		}
 
-		private void StackPanel_MouseDown(object sender, MouseButtonEventArgs e)
+		private void StackPanel_MouseUp(object sender, MouseButtonEventArgs e)
 		{
-			if (e.ClickCount == 2)
+			if (e.ClickCount == 1)
 			{
 				Clipboard.SetText(pnlContent.SelectedItem.ToString());
 				Hide();
 			}
+		}
+	}
+
+	public class TrimConverter : IValueConverter
+	{
+		public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+		{
+			return ((string) value).Trim();
+		}
+
+		public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+		{
+			return true;
 		}
 	}
 }
